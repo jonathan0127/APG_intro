@@ -118,7 +118,7 @@ with col1:
         
         if mst_edges:
             total_weight = sum(G[u][v]['weight'] for u, v in mst_edges)
-            mst_text = f"最小生成樹總權重: {total_weight}"
+            mst_text = f"Minimum Spanning Tree Total Weight: {total_weight}"
             
             # 添加信息面板背景
             info_panel = plt.Rectangle((0.03, -0.05), 0.94, 0.15, 

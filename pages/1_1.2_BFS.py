@@ -84,11 +84,10 @@ with col1:
         
         # 繪製標籤
         nx.draw_networkx_labels(G, pos, ax=ax, font_weight='bold')
-        
-        # 為顯示queue和已訪問節點添加圖例 - 調整位置避免重疊
+          # 為顯示queue和已訪問節點添加圖例 - 調整位置避免重疊
         # 創建一個長方形底色來讓文字更清晰
-        visited_text = f"訪問順序: {' -> '.join(visited) if visited else '無'}"
-        queue_text = f"queue狀態: {list(queue) if queue else '空'}"
+        visited_text = f"Visit Order: {' -> '.join(visited) if visited else 'None'}"
+        queue_text = f"Queue Status: {list(queue) if queue else 'Empty'}"
         
         # 正確方式清除現有的圖形元素，而不是直接設置 patches 屬性
         for patch in ax.patches[:]:
@@ -145,7 +144,7 @@ with col1:
                 graph_placeholder.pyplot(draw_graph(visited, queue))
                 time.sleep(1/speed)
         
-        result_placeholder.success(f"BFS 完成！訪問順序: {' -> '.join(visited_order)}")
+        result_placeholder.success(f"BFS Complete! Visit Order: {' -> '.join(visited_order)}")
 
 # BFS 實作程式碼
 st.header("Python 實作程式碼")

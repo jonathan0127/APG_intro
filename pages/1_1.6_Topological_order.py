@@ -64,44 +64,44 @@ with col1:
     if graph_type == "課程依賴關係":
         G = nx.DiGraph()
         edges = [
-            ('數學', '物理'), ('數學', '化學'),
-            ('物理', '電子學'), ('化學', '生物'),
-            ('電子學', '計算機'), ('生物', '生化'),
-            ('計算機', '人工智慧')
+            ("Math", "Physics"), ("Math", "Chemistry"),
+            ("Physics", "Electronics"), ("Chemistry", "Biology"),
+            ("Electronics", "Computer"), ("Biology", "Biochemistry"),
+            ("Computer", "AI")
         ]
         G.add_edges_from(edges)
         pos = {
-            '數學': (0.5, 1),
-            '物理': (0.2, 0.7), '化學': (0.8, 0.7),
-            '電子學': (0.2, 0.4), '生物': (0.8, 0.4),
-            '計算機': (0.2, 0.1), '生化': (0.8, 0.1),
-            '人工智慧': (0.5, -0.2)
+            "Math": (0.5, 1),
+            "Physics": (0.2, 0.7), "Chemistry": (0.8, 0.7),
+            "Electronics": (0.2, 0.4), "Biology": (0.8, 0.4),
+            "Computer": (0.2, 0.1), "Biochemistry": (0.8, 0.1),
+            "AI": (0.5, -0.2)
         }
     elif graph_type == "任務排程":
         G = nx.DiGraph()
         edges = [
-            ('A', 'C'), ('B', 'C'), ('B', 'D'),
-            ('C', 'E'), ('D', 'E'), ('E', 'F')
+            ("A", "C"), ("B", "C"), ("B", "D"),
+            ("C", "E"), ("D", "E"), ("E", "F")
         ]
         G.add_edges_from(edges)
         pos = {
-            'A': (0.2, 0.8), 'B': (0.8, 0.8),
-            'C': (0.3, 0.5), 'D': (0.7, 0.5),
-            'E': (0.5, 0.2), 'F': (0.5, -0.1)
+            "A": (0.2, 0.8), "B": (0.8, 0.8),
+            "C": (0.3, 0.5), "D": (0.7, 0.5),
+            "E": (0.5, 0.2), "F": (0.5, -0.1)
         }
     else:  # 自定義DAG
         G = nx.DiGraph()
         edges = [
-            ('1', '2'), ('1', '3'), ('2', '4'),
-            ('3', '4'), ('3', '5'), ('4', '6'),
-            ('5', '6')
+            ("1", "2"), ("1", "3"), ("2", "4"),
+            ("3", "4"), ("3", "5"), ("4", "6"),
+            ("5", "6")
         ]
         G.add_edges_from(edges)
         pos = {
-            '1': (0.5, 1),
-            '2': (0.2, 0.6), '3': (0.8, 0.6),
-            '4': (0.3, 0.2), '5': (0.7, 0.2),
-            '6': (0.5, -0.2)
+            "1": (0.5, 1),
+            "2": (0.2, 0.6), "3": (0.8, 0.6),
+            "4": (0.3, 0.2), "5": (0.7, 0.2),
+            "6": (0.5, -0.2)
         }
     
     # 創建顯示元素
@@ -147,22 +147,27 @@ with col1:
         labels = {}
         for node in G.nodes():
             degree = in_degrees.get(node, 0)
-            labels[node] = f"{node}\n({degree})"
+            if graph_type == "課程依賴關係":
+                en_map = {
+                    "數學": "Math", "物理": "Physics", "化學": "Chemistry", "電子學": "Electronics", "生物": "Biology", "生化": "Biochemistry", "計算機": "Computer", "人工智慧": "AI"
+                }
+                show = en_map.get(node, node)
+            else:
+                show = node
+            labels[node] = f"{show}\n({degree})"
         
         nx.draw_networkx_labels(G, pos, labels=labels, ax=ax, font_size=10, font_weight='bold')
-        
-        # 添加圖例
+          # 添加圖例
         legend_elements = [
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='red', markersize=12, label='當前處理'),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='green', markersize=12, label='已處理'),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='orange', markersize=12, label='入度為0'),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='lightblue', markersize=12, label='待處理')
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='red', markersize=12, label='Current Node'),
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='green', markersize=12, label='Processed'),
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='orange', markersize=12, label='In-degree 0'),
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='lightblue', markersize=12, label='Waiting')
         ]
         ax.legend(handles=legend_elements, loc='upper right', fontsize=10)
-        
-        # 顯示狀態信息
-        queue_text = f"佇列: {list(queue)}"
-        processed_text = f"排序結果: {' → '.join(processed)}"
+          # 顯示狀態信息
+        queue_text = f"Queue: {list(queue)}"
+        processed_text = f"Sorted Order: {' → '.join(processed)}"
         
         # 添加信息面板背景
         info_panel = plt.Rectangle((0.03, -0.15), 0.94, 0.12, 
@@ -174,7 +179,7 @@ with col1:
         ax.text(0.05, -0.08, queue_text, transform=ax.transAxes, fontsize=11, zorder=2)
         ax.text(0.05, -0.12, processed_text, transform=ax.transAxes, fontsize=11, zorder=2)
         
-        ax.set_title(f"拓撲排序執行過程 ({graph_type})", fontsize=14, fontweight='bold')
+        ax.set_title(f"Topological Sort Execution Process ({graph_type})", fontsize=14, fontweight='bold')
         ax.axis('off')
         plt.tight_layout()
         
@@ -184,7 +189,7 @@ with col1:
         if not steps_info:
             return pd.DataFrame()
         
-        headers = ["步驟", "處理節點", "移除邊", "更新入度", "新加入佇列", "當前排序"]
+        headers = ["Step", "Processing Node", "Removed Edges", "Updated In-degree", "New in Queue", "Current Order"]
         data = []
         
         for i, info in enumerate(steps_info, 1):
@@ -248,10 +253,10 @@ with col1:
             # 記錄步驟信息
             step_info = {
                 'current': current_node,
-                'removed_edges': ', '.join([f"{u}→{v}" for u, v in edges_to_remove]),
+                'removed_edges': ', '.join([f"{u}->{v}" for u, v in edges_to_remove]),
                 'updated_degrees': ', '.join(updated_nodes),
                 'new_in_queue': ', '.join(new_zero_degree),
-                'current_order': ' → '.join(topo_order)
+                'current_order': ' -> '.join(topo_order)
             }
             steps_info.append(step_info)
             
@@ -265,10 +270,10 @@ with col1:
         # 檢查是否成功完成拓撲排序
         if len(topo_order) == len(G.nodes()):
             result_placeholder.success(
-                f"拓撲排序完成！\n排序結果: {' → '.join(topo_order)}"
+                f"Topological sort complete!\nSorted order: {' -> '.join(topo_order)}"
             )
         else:
-            result_placeholder.error("圖中存在環，無法進行拓撲排序！")
+            result_placeholder.error("The graph contains a cycle. Topological sort failed!")
 
 # 拓撲排序實作程式碼
 st.header("Python 實作程式碼")

@@ -99,7 +99,7 @@ def display_components(adj_matrix, components):
     nx.draw_networkx_edges(G, pos, arrowsize=20)
     nx.draw_networkx_labels(G, pos, font_size=15)
     
-    plt.title("強連通分量 (Strongly Connected Components)")
+    plt.title("Strongly Connected Components")
     return plt
 
 def display_matrix(matrix, title="Matrix"):
@@ -139,12 +139,12 @@ def main():
         [0, 0, 0, 0]
     ])
     
-    st.subheader("原始有向圖")
+    st.subheader("Original Directed Graph")
     col1, col2 = st.columns(2)
     with col1:
-        st.pyplot(display_graph(A, "原始有向圖 G"))
+        st.pyplot(display_graph(A, "Original Directed Graph"))
     with col2:
-        st.pyplot(display_matrix(A, "鄰接矩陣 A"))
+        st.pyplot(display_matrix(A, "Adjacency Matrix A"))
     
     st.write("""
     在上面的例子中，我們有一個有向圖 G 和它對應的鄰接矩陣 A。
@@ -162,7 +162,7 @@ def main():
     with col1:
         st.pyplot(display_graph(transitive_closure, "Transitive Closure G+"))
     with col2:
-        st.pyplot(display_matrix(transitive_closure, "Transitive Closure矩陣 A+"))
+        st.pyplot(display_matrix(transitive_closure, "Transitive Closure Matrix A+"))
     
     st.write("""
     Transitive Closure G+ 顯示了所有可達性關係。例如，在原圖中，從頂點 0 到頂點 3 沒有直接的邊，
@@ -174,16 +174,16 @@ def main():
     A2 = np.matmul(A, A)
     A3 = np.matmul(A, A2)
     
-    st.subheader("A² = A × A (矩陣的平方)")
-    st.pyplot(display_matrix(A2, "A² 矩陣"))
+    st.subheader("A² = A × A (Matrix Squared)")
+    st.pyplot(display_matrix(A2, "A² Matrix"))
     
     st.write("""
     A² 的第 i 行第 j 列表示從頂點 i 到頂點 j 有沒有長度為 2 的路徑。
     例如，A²[0][2] = 1 表示從頂點 0 到頂點 2 存在長度為 2 的路徑 (0→1→2)。
     """)
     
-    st.subheader("A³ = A × A² (矩陣的立方)")
-    st.pyplot(display_matrix(A3, "A³ 矩陣"))
+    st.subheader("A³ = A × A² (Matrix Cubed)")
+    st.pyplot(display_matrix(A3, "A³ Matrix"))
     
     st.write("""
     A³ 的第 i 行第 j 列表示從頂點 i 到頂點 j 有沒有長度為 3 的路徑。
@@ -228,12 +228,12 @@ def main():
         [0, 0, 0, 1, 0]
     ])
     
-    st.subheader("連通性範例")
+    st.subheader("Connectivity Example")
     col1, col2 = st.columns(2)
     with col1:
-        st.pyplot(display_graph(B, "有向圖範例"))
+        st.pyplot(display_graph(B, "Directed Graph Example"))
     with col2:
-        st.pyplot(display_matrix(B, "鄰接矩陣 B"))
+        st.pyplot(display_matrix(B, "Adjacency Matrix B"))
     
     st.write("""
     在此範例中：

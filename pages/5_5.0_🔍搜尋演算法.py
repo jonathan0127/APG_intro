@@ -50,7 +50,7 @@ dfs_colors = ['#FF9999' if node == 0 else
 node_colors = [dfs_colors[dfs_order.index(node)] for node in tree.nodes()]
 nx.draw(tree, tree_pos, with_labels=True, node_color=node_colors, 
         node_size=700, ax=ax[0], font_weight='bold')
-ax[0].set_title("DFS 搜尋順序", fontsize=14)
+ax[0].set_title("DFS Search Order", fontsize=14)
 
 # BFS 訪問順序
 bfs_order = list(nx.bfs_tree(tree, 0).nodes())
@@ -60,7 +60,7 @@ bfs_colors = ['#FF9999' if node == 0 else
 node_colors = [bfs_colors[bfs_order.index(node)] for node in tree.nodes()]
 nx.draw(tree, tree_pos, with_labels=True, node_color=node_colors, 
         node_size=700, ax=ax[1], font_weight='bold')
-ax[1].set_title("BFS 搜尋順序", fontsize=14)
+ax[1].set_title("BFS Search Order", fontsize=14)
 
 plt.tight_layout()
 st.pyplot(fig)

@@ -64,9 +64,9 @@ ax.set_xticks(range(adj_matrix.shape[0]))
 ax.set_yticks(range(adj_matrix.shape[0]))
 ax.set_xticklabels(range(adj_matrix.shape[0]))
 ax.set_yticklabels(range(adj_matrix.shape[0]))
-ax.set_xlabel('目標節點')
-ax.set_ylabel('來源節點')
-ax.set_title('鄰接矩陣視覺化')
+ax.set_xlabel('Target Node')
+ax.set_ylabel('Source Node')
+ax.set_title('Adjacency Matrix Visualization')
 st.pyplot(fig)
 
 # 生成並顯示鄰接表
@@ -80,7 +80,7 @@ ax.set_ylim(0, len(G.nodes())*1.5)
 ax.axis('off')
 
 for i, node in enumerate(sorted(G.nodes())):
-    ax.text(0.5, len(G.nodes())*1.2 - i*1.2, f"節點 {node}", fontsize=14, ha='left')
+    ax.text(0.5, len(G.nodes())*1.2 - i*1.2, f"Node {node}", fontsize=14, ha='left')
     ax.text(2, len(G.nodes())*1.2 - i*1.2, "→", fontsize=14)
     neighbors = list(G.neighbors(node))
     if neighbors:
@@ -90,7 +90,7 @@ for i, node in enumerate(sorted(G.nodes())):
             if j < len(neighbors) - 1:
                 ax.text(3 + j*1.5 + 0.8, len(G.nodes())*1.2 - i*1.2, "→", fontsize=14)
 
-ax.set_title('鄰接表視覺化', fontsize=16)
+ax.set_title('Adjacency List Visualization', fontsize=16)
 st.pyplot(fig)
 
 # 比較表格

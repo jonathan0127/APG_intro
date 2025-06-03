@@ -82,11 +82,10 @@ with col1:
         
         # 繪製標籤
         nx.draw_networkx_labels(G, pos, ax=ax, font_weight='bold')
-        
-        # 為顯示堆疊和已訪問節點添加圖例 - 調整位置避免重疊
+          # 為顯示堆疊和已訪問節點添加圖例 - 調整位置避免重疊
         # 創建一個長方形底色來讓文字更清晰
-        visited_text = f"訪問順序: {' -> '.join(visited) if visited else '無'}"
-        stack_text = f"堆疊狀態: {list(reversed(stack)) if stack else '空'}"
+        visited_text = f"Visit Order: {' -> '.join(visited) if visited else 'None'}"
+        stack_text = f"Stack Status: {list(reversed(stack)) if stack else 'Empty'}"
         
         # 正確方式清除現有的圖形元素，而不是直接設置 patches 屬性
         for patch in ax.patches[:]:
@@ -145,7 +144,7 @@ with col1:
                 graph_placeholder.pyplot(draw_graph(visited, stack))
                 time.sleep(1/speed)
         
-        result_placeholder.success(f"DFS 完成！訪問順序: {' -> '.join(visited_order)}")
+        result_placeholder.success(f"DFS Complete! Visit Order: {' -> '.join(visited_order)}")
 
 # DFS 實作程式碼
 st.header("Python 實作程式碼")
@@ -214,7 +213,7 @@ dfs_colors = ['#FF9999' if node == 0 else
 node_colors = [dfs_colors[dfs_order.index(node)] for node in tree.nodes()]
 nx.draw(tree, tree_pos, with_labels=True, node_color=node_colors, 
         node_size=700, ax=comp_ax[0], font_weight='bold')
-comp_ax[0].set_title("DFS 搜尋順序", fontsize=14)
+comp_ax[0].set_title("DFS Search Order", fontsize=14)
 
 # BFS 訪問順序
 bfs_order = list(nx.bfs_tree(tree, 0).nodes())
@@ -224,7 +223,7 @@ bfs_colors = ['#FF9999' if node == 0 else
 node_colors = [bfs_colors[bfs_order.index(node)] for node in tree.nodes()]
 nx.draw(tree, tree_pos, with_labels=True, node_color=node_colors, 
         node_size=700, ax=comp_ax[1], font_weight='bold')
-comp_ax[1].set_title("BFS 搜尋順序", fontsize=14)
+comp_ax[1].set_title("BFS Search Order", fontsize=14)
 
 plt.tight_layout()
 st.pyplot(comp_fig)

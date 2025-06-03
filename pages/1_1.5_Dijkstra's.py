@@ -126,13 +126,12 @@ with col1:
         # 繪製邊權重標籤 - 增大字體
         edge_labels = {(u, v): d['weight'] for u, v, d in G.edges(data=True)}
         nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=10)
-        
-        # 添加圖例 - 增大圖例標記
+          # 添加圖例 - 增大圖例標記
         legend_elements = [
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='red', markersize=12, label='當前節點'),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='green', markersize=12, label='已處理'),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='orange', markersize=12, label='待處理'),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='lightgray', markersize=12, label='未發現')
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='red', markersize=12, label='Current Node'),
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='green', markersize=12, label='Processed'),
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='orange', markersize=12, label='In Queue'),
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='lightgray', markersize=12, label='Undiscovered')
         ]
         ax.legend(handles=legend_elements, loc='upper right', fontsize=10)
         
@@ -146,7 +145,7 @@ with col1:
         if not steps_info:
             return pd.DataFrame()
         
-        headers = ["步驟", "當前節點", "鄰居", "舊距離", "新距離", "是否更新", "priority queue"]
+        headers = ["Step", "Current Node", "Neighbor", "Old Distance", "New Distance", "Updated", "Priority Queue"]
         data = []
         
         for i, info in enumerate(steps_info, 1):
