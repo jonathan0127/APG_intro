@@ -28,165 +28,123 @@ st.markdown("""
 # 視覺化示範
 st.header("DFS 視覺化展示")
 
-# 創建示範圖
-col1, col2 = st.columns([3, 1])
+# 將控制面板移到左側邊欄
+st.sidebar.header("控制面板")
+start_node = st.sidebar.selectbox("選擇起始節點", ["A", "B", "C", "D", "E", "F", "G"], index=0)
+speed = st.sidebar.slider("動畫速度", 0.5, 3.0, 1.0, 0.1)
+run_dfs = st.sidebar.button("執行 DFS 演算法")
 
-with col2:
-    st.subheader("控制面板")
-    start_node = st.selectbox("選擇起始節點", ["A", "B", "C", "D", "E", "F", "G"], index=0)
-    speed = st.slider("動畫速度", 0.5, 3.0, 1.0, 0.1)
-    run_dfs = st.button("執行 DFS 演算法")
+# 創建一個圖
+G = nx.Graph()
+G.add_edges_from([
+    ('A', 'B'), ('A', 'C'), 
+    ('B', 'D'), ('B', 'E'),
+    ('C', 'F'), ('C', 'G'),
+    ('E', 'F')
+])
 
-with col1:
-    # 創建一個圖
-    G = nx.Graph()
-    G.add_edges_from([
-        ('A', 'B'), ('A', 'C'), 
-        ('B', 'D'), ('B', 'E'),
-        ('C', 'F'), ('C', 'G'),
-        ('E', 'F')
-    ])
-    
-    # 設置節點位置
-    pos = {
-        'A': (0.5, 1), 
-        'B': (0.3, 0.7), 'C': (0.7, 0.7),
-        'D': (0.1, 0.4), 'E': (0.4, 0.4), 'F': (0.6, 0.4), 'G': (0.9, 0.4)
-    }
-    
-    # 創建一個用於顯示圖形的佔位元素
-    graph_placeholder = st.empty()
-    
-    fig, ax = plt.subplots(figsize=(8, 6))
-    
-    def draw_graph(visited=[], stack=[], current=None):
-        ax.clear()
-        
-        # 繪製邊
-        nx.draw_networkx_edges(G, pos, ax=ax, edge_color='gray')
-        
-        # 節點顏色
-        node_colors = []
-        for node in G.nodes():
-            if node == current:
-                node_colors.append('red')  # 當前節點
-            elif node in visited and node != current:
-                node_colors.append('green')  # 已訪問節點
-            elif node in stack and node != current:
-                node_colors.append('orange')  # 在堆疊中的節點
-            else:
-                node_colors.append('lightblue')  # 未訪問節點
-        
-        # 繪製節點
-        nx.draw_networkx_nodes(G, pos, ax=ax, node_color=node_colors, node_size=700)
-        
-        # 繪製標籤
-        nx.draw_networkx_labels(G, pos, ax=ax, font_weight='bold')
-          # 為顯示堆疊和已訪問節點添加圖例 - 調整位置避免重疊
-        # 創建一個長方形底色來讓文字更清晰
-        visited_text = f"Visit Order: {' -> '.join(visited) if visited else 'None'}"
-        stack_text = f"Stack Status: {list(reversed(stack)) if stack else 'Empty'}"
-        
-        # 正確方式清除現有的圖形元素，而不是直接設置 patches 屬性
-        for patch in ax.patches[:]:
-            patch.remove()
-        
-        # 添加信息面板背景
-        info_panel = plt.Rectangle((0.03, -0.05), 0.94, 0.15, 
-                                  fill=True, color='white', alpha=0.8, 
-                                  transform=ax.transAxes, zorder=1)
-        ax.add_patch(info_panel)
-        
-        # 在底色上添加文字
-        ax.text(0.05, -0.05, visited_text, transform=ax.transAxes, fontsize=10, zorder=2)
-        ax.text(0.05, -0.1, stack_text, transform=ax.transAxes, fontsize=10, zorder=2)
-        
-        ax.axis('off')
-        
-        # 調整圖形布局，確保所有內容可見
-        plt.tight_layout()
-        
-        return fig
-    
-    # 初始顯示
-    graph_placeholder.pyplot(draw_graph())
-    
-    # 結果顯示區
-    result_placeholder = st.empty()
-    
-    if run_dfs:
-        # DFS 實現
-        visited = []
-        stack = [start_node]
-        visited_order = []
-        
-        while stack:
-            # 顯示當前狀態
-            current = stack[-1]
-            graph_placeholder.pyplot(draw_graph(visited, stack, current))
-            time.sleep(1/speed)  # 控制動畫速度
-            
-            # 彈出堆疊
-            node = stack.pop()
-            if node not in visited:
-                visited.append(node)
-                visited_order.append(node)
-                
-                # 尋找所有未訪問的相鄰節點
-                neighbors = list(G[node])
-                neighbors.sort(reverse=True)  # 為了讓DFS按字母順序訪問，需要反轉
-                
-                for neighbor in neighbors:
-                    if neighbor not in visited and neighbor not in stack:
-                        stack.append(neighbor)
-                
-                # 更新顯示
-                graph_placeholder.pyplot(draw_graph(visited, stack))
-                time.sleep(1/speed)
-        
-        result_placeholder.success(f"DFS Complete! Visit Order: {' -> '.join(visited_order)}")
-
-# DFS 實作程式碼
-st.header("Python 實作程式碼")
-
-st.subheader("遞迴實現")
-recursive_code = '''
-def dfs_recursive(graph, node, visited=None):
-    # 初始化已訪問集合
-    if visited is None:
-        visited = set()
-    
-    # 將當前節點加入已訪問集合並印出
-    visited.add(node)
-    print(node, end=' ')
-    
-    # 遞迴訪問所有相鄰的未訪問節點
-    for neighbor in graph[node]:
-        if neighbor not in visited:
-            dfs_recursive(graph, neighbor, visited)
-    
-    return visited
-
-# 範例使用
-graph = {
-    'A': ['B', 'C'],
-    'B': ['A', 'D', 'E'],
-    'C': ['A', 'F', 'G'],
-    'D': ['B'],
-    'E': ['B', 'F'],
-    'F': ['C', 'E'],
-    'G': ['C']
+# 設置節點位置
+pos = {
+    'A': (0.5, 1), 
+    'B': (0.3, 0.7), 'C': (0.7, 0.7),
+    'D': (0.1, 0.4), 'E': (0.4, 0.4), 'F': (0.6, 0.4), 'G': (0.9, 0.4)
 }
 
-print("DFS 訪問順序 (遞迴):", end=' ')
-dfs_recursive(graph, 'A')
-'''
+# 創建一個用於顯示圖形的佔位元素
+graph_placeholder = st.empty()
 
-st.code(recursive_code, language="python")
+fig, ax = plt.subplots(figsize=(8, 6))
+
+def draw_graph(visited=[], stack=[], current=None):
+    ax.clear()
+    
+    # 繪製邊
+    nx.draw_networkx_edges(G, pos, ax=ax, edge_color='gray')
+    
+    # 節點顏色
+    node_colors = []
+    for node in G.nodes():
+        if node == current:
+            node_colors.append('red')  # 當前節點
+        elif node in visited and node != current:
+            node_colors.append('green')  # 已訪問節點
+        elif node in stack and node != current:
+            node_colors.append('orange')  # 在堆疊中的節點
+        else:
+            node_colors.append('lightblue')  # 未訪問節點
+    
+    # 繪製節點
+    nx.draw_networkx_nodes(G, pos, ax=ax, node_color=node_colors, node_size=700)
+    
+    # 繪製標籤
+    nx.draw_networkx_labels(G, pos, ax=ax, font_weight='bold')
+      # 為顯示堆疊和已訪問節點添加圖例 - 調整位置避免重疊
+    # 創建一個長方形底色來讓文字更清晰
+    visited_text = f"Visit Order: {' -> '.join(visited) if visited else 'None'}"
+    stack_text = f"Stack Status: {list(reversed(stack)) if stack else 'Empty'}"
+    
+    # 正確方式清除現有的圖形元素，而不是直接設置 patches 屬性
+    for patch in ax.patches[:]:
+        patch.remove()
+    
+    # 添加信息面板背景
+    info_panel = plt.Rectangle((0.03, -0.05), 0.94, 0.15, 
+                              fill=True, color='white', alpha=0.8, 
+                              transform=ax.transAxes, zorder=1)
+    ax.add_patch(info_panel)
+    
+    # 在底色上添加文字
+    ax.text(0.05, -0.05, visited_text, transform=ax.transAxes, fontsize=10, zorder=2)
+    ax.text(0.05, -0.1, stack_text, transform=ax.transAxes, fontsize=10, zorder=2)
+    
+    ax.axis('off')
+    
+    # 調整圖形布局，確保所有內容可見
+    plt.tight_layout()
+    
+    return fig
+
+# 初始顯示
+graph_placeholder.pyplot(draw_graph())
+
+# 結果顯示區
+result_placeholder = st.empty()
+
+if run_dfs:
+    # DFS 實現
+    visited = []
+    stack = [start_node]
+    visited_order = []
+    
+    while stack:
+        # 顯示當前狀態
+        current = stack[-1]
+        graph_placeholder.pyplot(draw_graph(visited, stack, current))
+        time.sleep(1/speed)  # 控制動畫速度
+        
+        # 彈出堆疊
+        node = stack.pop()
+        if node not in visited:
+            visited.append(node)
+            visited_order.append(node)
+            
+            # 尋找所有未訪問的相鄰節點
+            neighbors = list(G[node])
+            neighbors.sort(reverse=True)  # 為了讓DFS按字母順序訪問，需要反轉
+            
+            for neighbor in neighbors:
+                if neighbor not in visited and neighbor not in stack:
+                    stack.append(neighbor)
+            
+            # 更新顯示
+            graph_placeholder.pyplot(draw_graph(visited, stack))
+            time.sleep(1/speed)
+    
+    result_placeholder.success(f"DFS Complete! Visit Order: {' -> '.join(visited_order)}")
 
 
 # 應用場景
-st.header("DFS 應用場景粑粑")
+st.header("DFS 應用場景")
 st.markdown("""
 
 ### DFS vs BFS 比較圖

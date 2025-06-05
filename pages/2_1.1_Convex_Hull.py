@@ -194,7 +194,7 @@ def plot_convex_hull_step(step, ax):
         for point in right_points:
             ax.plot(point[0], point[1], 'ro', markersize=8)
             
-        ax.set_title(f"分割階段 (層級 {level}): 藍色為左半部，紅色為右半部")
+        ax.set_title(f"Divide Phase (Level {level}): Blue for left part, Red for right part")
         
     elif step['type'] == 'merge_before':
         # 繪製兩個子凸包
@@ -234,7 +234,7 @@ def plot_convex_hull_step(step, ax):
         for point in right_hull:
             ax.plot(point[0], point[1], 'ro', markersize=8)
             
-        ax.set_title(f"合併前 (層級 {level}): 左凸包（藍）和右凸包（紅），灰色為其他層級凸包")
+        ax.set_title(f"Before Merge (Level {level}): Left Hull (Blue) and Right Hull (Red), Gray for Other Level Hulls")
         
     elif step['type'] == 'merge_after':
         # 繪製合併後的結果
@@ -262,10 +262,10 @@ def plot_convex_hull_step(step, ax):
         for point in result:
             ax.plot(point[0], point[1], 'go', markersize=8)
             
-        ax.set_title(f"合併後 (層級 {level}): 新凸包（綠），灰色為其他層級凸包")
+        ax.set_title(f"After Merge (Level {level}): New Hull (Green), Gray for Other Level Hulls")
 
 def main():
-    st.title("分治法凸包演算法視覺化")
+    st.title("分治法凸包演算法")
     st.markdown("---")
     
     # 側邊欄控制
