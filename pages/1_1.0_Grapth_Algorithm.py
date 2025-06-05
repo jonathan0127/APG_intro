@@ -24,16 +24,16 @@ st.markdown("""
 """
 )
 
-# 添加更多圖論基礎知識
+
 st.markdown("""
 ## 圖的表示方法
 1. **鄰接矩陣 (Adjacency Matrix)**: 用二維矩陣表示節點間的連接關係
 2. **鄰接表 (Adjacency List)**: 每個節點存儲其相鄰節點的列表
 """)
-# 添加圖像與表格化說明
+
 st.markdown("### 鄰接矩陣與鄰接表的視覺化比較")
 
-# 創建示例圖
+
 def create_sample_graph():
     G = nx.DiGraph()
     G.add_edges_from([(0,1), (0,2), (1,2), (2,0), (2,3)])

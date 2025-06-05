@@ -168,6 +168,66 @@ def convex_hull_divide_conquer(points, steps=None, level=0):
     
     return result
 
+def graham_scan(points, steps=None):
+    """Graham's scan 演算法求凸包"""
+    if len(points) < 3:
+        return points
+    
+    # 找到最下方的點（y最小，若相同則x最小）
+    start_point = min(points, key=lambda p: (p[1], p[0]))
+    
+    if steps is not None:
+        steps.append({
+            'type': 'find_start',
+            'start_point': start_point,
+            'all_points': points
+        })
+    
+    # 計算其他點相對於起始點的極角
+    def polar_angle(p):
+        dx = p[0] - start_point[0]
+        dy = p[1] - start_point[1]
+        return np.arctan2(dy, dx)
+    
+    # 按極角排序（相同極角時距離近的在前）
+    other_points = [p for p in points if p != start_point]
+    sorted_points = sorted(other_points, key=lambda p: (polar_angle(p), distance(start_point, p)))
+    
+    if steps is not None:
+        steps.append({
+            'type': 'sort_by_angle',
+            'start_point': start_point,
+            'sorted_points': sorted_points,
+            'all_points': points
+        })
+    
+    # Graham scan 主要過程
+    hull = [start_point]
+    
+    for point in sorted_points:
+        # 移除形成右轉的點
+        while len(hull) > 1 and orientation(hull[-2], hull[-1], point) != 2:
+            removed = hull.pop()
+            if steps is not None:
+                steps.append({
+                    'type': 'remove_point',
+                    'hull': hull.copy(),
+                    'removed_point': removed,
+                    'current_point': point,
+                    'all_points': points
+                })
+        
+        hull.append(point)
+        if steps is not None:
+            steps.append({
+                'type': 'add_point',
+                'hull': hull.copy(),
+                'added_point': point,
+                'all_points': points
+            })
+    
+    return hull
+
 def plot_convex_hull_step(step, ax):
     """繪製單個步驟"""
     ax.clear()
@@ -264,12 +324,113 @@ def plot_convex_hull_step(step, ax):
             
         ax.set_title(f"After Merge (Level {level}): New Hull (Green), Gray for Other Level Hulls")
 
+def plot_graham_scan_step(step, ax):
+    """繪製 Graham scan 步驟"""
+    ax.clear()
+    ax.set_xlim(-10, 110)
+    ax.set_ylim(-10, 110)
+    ax.grid(True, alpha=0.3)
+    ax.set_aspect('equal')
+    
+    all_points = step['all_points']
+    
+    if step['type'] == 'find_start':
+        # 顯示找到的起始點
+        start_point = step['start_point']
+        
+        for point in all_points:
+            if point == start_point:
+                ax.plot(point[0], point[1], 'ro', markersize=12, label='Start Point')
+            else:
+                ax.plot(point[0], point[1], 'ko', markersize=8)
+        
+        ax.set_title("Graham Scan: 找到起始點（最下方的點）")
+        ax.legend()
+        
+    elif step['type'] == 'sort_by_angle':
+        # 顯示按極角排序後的結果
+        start_point = step['start_point']
+        sorted_points = step['sorted_points']
+        
+        # 繪製起始點
+        ax.plot(start_point[0], start_point[1], 'ro', markersize=12, label='Start Point')
+        
+        # 繪製排序後的點並標上順序
+        for i, point in enumerate(sorted_points):
+            ax.plot(point[0], point[1], 'bo', markersize=8)
+            ax.annotate(str(i+1), (point[0], point[1]), xytext=(5, 5), 
+                       textcoords='offset points', fontsize=10, color='blue')
+        
+        # 繪製從起始點到各點的射線
+        for point in sorted_points:
+            ax.plot([start_point[0], point[0]], [start_point[1], point[1]], 
+                   'b--', alpha=0.5, linewidth=1)
+        
+        ax.set_title("Graham Scan: 按極角排序點（藍色數字表示順序）")
+        ax.legend()
+        
+    elif step['type'] == 'remove_point':
+        # 顯示移除點的過程
+        hull = step['hull']
+        removed_point = step['removed_point']
+        current_point = step['current_point']
+        
+        # 繪製所有點
+        for point in all_points:
+            if point in hull:
+                ax.plot(point[0], point[1], 'go', markersize=8)
+            elif point == removed_point:
+                ax.plot(point[0], point[1], 'rx', markersize=12, markeredgewidth=3, label='Removed')
+            elif point == current_point:
+                ax.plot(point[0], point[1], 'bo', markersize=10, label='Current')
+            else:
+                ax.plot(point[0], point[1], 'ko', markersize=6)
+        
+        # 繪製當前凸包
+        if len(hull) > 1:
+            hull_polygon = Polygon(hull + [current_point], fill=False, edgecolor='red', 
+                                 linewidth=2, linestyle='--', alpha=0.7)
+            ax.add_patch(hull_polygon)
+        
+        ax.set_title(f"Graham Scan: 移除點 {removed_point} （形成右轉）")
+        ax.legend()
+        
+    elif step['type'] == 'add_point':
+        # 顯示添加點的過程
+        hull = step['hull']
+        added_point = step['added_point']
+        
+        # 繪製所有點
+        for point in all_points:
+            if point in hull:
+                if point == added_point:
+                    ax.plot(point[0], point[1], 'go', markersize=12, label='Just Added')
+                else:
+                    ax.plot(point[0], point[1], 'go', markersize=8)
+            else:
+                ax.plot(point[0], point[1], 'ko', markersize=6)
+        
+        # 繪製當前凸包
+        if len(hull) > 2:
+            hull_polygon = Polygon(hull, fill=True, facecolor='green', alpha=0.3, 
+                                 edgecolor='green', linewidth=2)
+            ax.add_patch(hull_polygon)
+        elif len(hull) == 2:
+            ax.plot([hull[0][0], hull[1][0]], [hull[0][1], hull[1][1]], 
+                   'g-', linewidth=2)
+        
+        ax.set_title(f"Graham Scan: 添加點 {added_point} 到凸包")
+        ax.legend()
+
 def main():
-    st.title("分治法凸包演算法")
+    st.title("凸包演算法視覺化")
     st.markdown("---")
     
     # 側邊欄控制
     st.sidebar.title("控制面板")
+    
+    # 演算法選擇
+    algorithm = st.sidebar.selectbox("選擇演算法", ["分治法 (Divide & Conquer)", "Graham's Scan"], index=0)
     
     # 點數控制
     num_points = st.sidebar.slider("點的數量", 4, 20, 8)
@@ -293,25 +454,45 @@ def main():
     # 計算凸包按鈕
     if st.sidebar.button("計算凸包"):
         steps = []
-        result = convex_hull_divide_conquer(points.copy(), steps, 0)
+        if algorithm == "分治法 (Divide & Conquer)":
+            result = convex_hull_divide_conquer(points.copy(), steps, 0)
+        else:  # Graham's Scan
+            result = graham_scan(points.copy(), steps)
+        
         st.session_state.steps = steps
         st.session_state.result = result
         st.session_state.current_step = 0
+        st.session_state.algorithm = algorithm
     
     # 顯示點集信息
     st.sidebar.write(f"當前點集：{len(points)} 個點")
+    st.sidebar.write(f"選擇的演算法：{algorithm}")
     
-    st.write("### 演算法說明")
-    st.write("""
-    **分治法凸包演算法步驟：**
-    
-    1. **前處理**：將點集按x座標排序後分成兩半
-    2. **Devide**：遞迴求解左右兩部分的凸包
-    3. **Conquer**：找到兩個凸包的上下公切線，合併成最終凸包
-    
-    **時間複雜度：** O(n log n)
-    """)
-    
+    # 演算法說明
+    if algorithm == "分治法 (Divide & Conquer)":
+        st.write("### 分治法凸包演算法說明")
+        st.write("""
+        **分治法凸包演算法步驟：**
+        
+        1. **前處理**：將點集按x座標排序後分成兩半
+        2. **Divide**：遞迴求解左右兩部分的凸包
+        3. **Conquer**：找到兩個凸包的上下公切線，合併成最終凸包
+        
+        **時間複雜度：** O(n log n)
+        """)
+    else:
+        st.write("### Graham's Scan 演算法說明")
+        st.write("""
+        **Graham's Scan 演算法步驟：**
+        
+        1. **找起始點**：找到y座標最小的點（若有多個則選x座標最小的）
+        2. **極角排序**：將其他點按相對於起始點的極角排序
+        3. **掃描過程**：依序處理每個點：
+           - 如果當前點與凸包形成左轉，加入凸包
+           - 如果形成右轉，移除凸包頂部的點直到形成左轉
+        
+        **時間複雜度：** O(n log n)（主要來自排序）
+        """)
 
     if 'steps' in st.session_state and st.session_state.steps:
         # 步驟控制
@@ -322,7 +503,10 @@ def main():
         # 繪圖
         fig, ax = plt.subplots(figsize=(10, 8))
         if current_step < len(st.session_state.steps):
-            plot_convex_hull_step(st.session_state.steps[current_step], ax)
+            if st.session_state.get('algorithm', '').startswith("Graham"):
+                plot_graham_scan_step(st.session_state.steps[current_step], ax)
+            else:
+                plot_convex_hull_step(st.session_state.steps[current_step], ax)
         
         st.pyplot(fig)
         
@@ -331,7 +515,10 @@ def main():
             placeholder = st.empty()
             for i in range(len(st.session_state.steps)):
                 fig, ax = plt.subplots(figsize=(10, 8))
-                plot_convex_hull_step(st.session_state.steps[i], ax)
+                if st.session_state.get('algorithm', '').startswith("Graham"):
+                    plot_graham_scan_step(st.session_state.steps[i], ax)
+                else:
+                    plot_convex_hull_step(st.session_state.steps[i], ax)
                 placeholder.pyplot(fig)
                 time.sleep(1.5)
                 plt.close(fig)
@@ -349,9 +536,6 @@ def main():
         ax.set_title("初始點集")
         st.pyplot(fig)
 
-
-    
-    
     if 'result' in st.session_state:
         st.write("### 結果")
         st.write(f"凸包頂點數：{len(st.session_state.result)}")
@@ -361,18 +545,30 @@ def main():
     
     # 圖例
     st.markdown("---")
-    st.write("### 顏色說明")
-    col1, col2, col3, col4, col5 = st.columns(5)
-    with col1:
-        st.markdown("🔵 **藍色**：左半部分")
-    with col2:
-        st.markdown("🔴 **紅色**：右半部分")
-    with col3:
-        st.markdown("🟢 **綠色**：新合併凸包")
-    with col4:
-        st.markdown("⚫ **黑色**：所有點")
-    with col5:
-        st.markdown("⚪ **灰色**：其他層級凸包")
+    if algorithm == "分治法 (Divide & Conquer)":
+        st.write("### 顏色說明（分治法）")
+        col1, col2, col3, col4, col5 = st.columns(5)
+        with col1:
+            st.markdown("🔵 **藍色**：左半部分")
+        with col2:
+            st.markdown("🔴 **紅色**：右半部分")
+        with col3:
+            st.markdown("🟢 **綠色**：新合併凸包")
+        with col4:
+            st.markdown("⚫ **黑色**：所有點")
+        with col5:
+            st.markdown("⚪ **灰色**：其他層級凸包")
+    else:
+        st.write("### 顏色說明（Graham's Scan）")
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.markdown("🔴 **紅色**：起始點")
+        with col2:
+            st.markdown("🔵 **藍色**：當前處理點")
+        with col3:
+            st.markdown("🟢 **綠色**：凸包中的點")
+        with col4:
+            st.markdown("❌ **紅叉**：被移除的點")
 
 if __name__ == "__main__":
     main()
