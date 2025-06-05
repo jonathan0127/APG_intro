@@ -1,13 +1,9 @@
 import streamlit as st
 
-st.set_page_config(
-    page_title="演算法視覺化",
-    page_icon="🧮",
-)
+st.set_page_config(page_title="演算法視覺化",page_icon="🧮",)
 
-st.write("# 常用演算法說明區 👋")
+st.write("# 常用演算法說明區")
 
-# 首頁連結
 st.sidebar.success("Home")
 
 # 創建下拉式選單
@@ -21,7 +17,6 @@ graph_algorithms = st.sidebar.expander("🌐 圖論演算法")
 with graph_algorithms:
     st.page_link("pages/1_1.4_Minimum_Spanning_Trees.py", label="最小生成樹 (MST)")
     st.page_link("pages/1_1.5_Dijkstra's.py", label="Dijkstra最短路徑")
-    st.page_link("pages/1_1.6_Topological_order.py", label="拓撲排序")
 
 # 在這裡可以添加其他演算法分類
 # sorting_algorithms = st.sidebar.expander("📊 排序演算法")
