@@ -163,7 +163,8 @@ def convex_hull_divide_conquer(points, steps=None, level=0):
             'result': result,
             'all_points': points,
             'level': level,
-            'all_existing_hulls': all_hulls.copy()
+            'all_existing_hulls': all_hulls.copy(),
+            'final_hull_this_level': True  # 標記這是這個層級的最終凸包
         })
     
     return result
@@ -239,33 +240,129 @@ def plot_convex_hull_step(step, ax):
     # 確保每個步驟都有層級信息
     level = step.get('level', 0)
     
+    # 添加遞迴層級指示器
+    ax.text(5, 105, f"Recursion Level: {level}", fontsize=12, 
+            bbox=dict(facecolor='yellow', alpha=0.3))
+    
     if step['type'] == 'divide':
-        # 繪製所有點
+        # 繪製所有點 - 先劃分當前處理的點和非當前處理的點
         all_points = step['all_points']
         left_points = step['left']
         right_points = step['right']
         
-        for point in all_points:
-            ax.plot(point[0], point[1], 'ko', markersize=6)
+        # 取得所有點，包括不在當前步驟中的點
+        # 首先取得原始完整點集
+        original_points = []
+        if 'original_points' in st.session_state:
+            original_points = st.session_state.original_points
+        else:
+            # 如果找不到原始點集，嘗試從第一個步驟獲取
+            for original_step in st.session_state.steps:
+                if original_step['type'] == 'divide' and original_step['level'] == 0:
+                    original_points = original_step['all_points']
+                    break
+        
+        # 將當前處理的點轉換為集合，便於快速查找
+        current_points_set = set()
+        for p in all_points:
+            current_points_set.add(tuple(p))
+        
+        # 先繪製所有非當前處理的點（淺灰色，小尺寸）
+        for point in original_points:
+            if tuple(point) not in current_points_set:
+                ax.plot(point[0], point[1], 'o', color='lightgray', alpha=0.3, markersize=3)
+        
+        # 取得當前遞迴層級中不被直接處理的點
+        current_processing_points = left_points + right_points
+        other_points_in_current = [p for p in all_points if p not in current_processing_points]
+        
+        # 繪製當前層級但不在直接處理範圍的點（灰色，較小）
+        for point in other_points_in_current:
+            ax.plot(point[0], point[1], 'o', color='gray', alpha=0.5, markersize=4)
+        
+        # 然後繪製當前正在處理的所有點（黑色，較大）
+        for point in current_processing_points:
+            ax.plot(point[0], point[1], 'ko', markersize=6, alpha=0.7)
         
         # 用不同顏色標記左右部分
         for point in left_points:
             ax.plot(point[0], point[1], 'bo', markersize=8)
         for point in right_points:
             ax.plot(point[0], point[1], 'ro', markersize=8)
+        
+        # 添加邊框標示當前處理範圍
+        if len(current_processing_points) > 2:
+            # 找出當前處理範圍的邊界
+            min_x = min(p[0] for p in current_processing_points)
+            max_x = max(p[0] for p in current_processing_points)
+            min_y = min(p[1] for p in current_processing_points)
+            max_y = max(p[1] for p in current_processing_points)
             
-        ax.set_title(f"Divide Phase (Level {level}): Blue for left part, Red for right part")
+            # 添加虛線框
+            padding = 5
+            ax.plot([min_x-padding, max_x+padding, max_x+padding, min_x-padding, min_x-padding],
+                    [min_y-padding, min_y-padding, max_y+padding, max_y+padding, min_y-padding],
+                    'k--', alpha=0.5, linewidth=1)
+            
+        ax.set_title(f"Division Phase (Level {level}): Recursing Down", fontsize=14)
+        
+        # 添加說明
+        ax.text(5, 95, "Recursion Down: Breaking problem into smaller subproblems", 
+                fontsize=10, bbox=dict(facecolor='white', alpha=0.7))
+        ax.text(5, 90, "Light gray points: Points from other recursion levels", 
+                fontsize=10, bbox=dict(facecolor='white', alpha=0.7))
+        
+        # 添加圖例說明
+        legend_elements = [
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='lightgray', alpha=0.3, markersize=6, label='Other level points'),
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='gray', alpha=0.5, markersize=6, label='Current level non-processed'),
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='blue', markersize=8, label='Left half'),
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='red', markersize=8, label='Right half')
+        ]
+        ax.legend(handles=legend_elements, loc='upper right')
         
     elif step['type'] == 'merge_before':
         # 繪製兩個子凸包
         left_hull = step['left_hull']
         right_hull = step['right_hull']
+        all_points = step['all_points']
+        
+        # 確保繪製所有點，包括不在當前處理範圍的點
+        # 首先取得原始點集
+        original_points = []
+        for original_step in st.session_state.steps:
+            if original_step['type'] == 'divide' and original_step['level'] == 0:
+                original_points = original_step['all_points']
+                break
+        
+        # 取得當前正在處理的點和其他點
+        current_hull_points = set()
+        for p in left_hull + right_hull:
+            current_hull_points.add(tuple(p))  # 將點轉為元組以便使用set
+        
+        # 繪製非當前處理的點（灰色，較小）
+        for point in original_points:
+            if tuple(point) not in current_hull_points and point not in all_points:
+                ax.plot(point[0], point[1], 'o', color='lightgray', alpha=0.4, markersize=3)
+        
+        # 繪製遞迴層級結構
+        recursion_levels = {}
+        if 'all_existing_hulls' in step:
+            for i, existing_hull in enumerate(step['all_existing_hulls']):
+                # 根據大小猜測遞迴層級
+                hull_size = len(existing_hull)
+                if hull_size not in recursion_levels:
+                    recursion_levels[hull_size] = []
+                recursion_levels[hull_size].append(existing_hull)
         
         # 先繪製所有已存在的凸包（半透明灰色）
         if 'all_existing_hulls' in step:
-            for existing_hull in step['all_existing_hulls']:
+            for i, existing_hull in enumerate(step['all_existing_hulls']):
                 if len(existing_hull) > 2:
-                    existing_polygon = Polygon(existing_hull, fill=True, facecolor='gray', alpha=0.15, edgecolor='gray', linewidth=1)
+                    alpha_value = 0.1 + 0.05 * (i % 3)  # 不同透明度
+                    existing_polygon = Polygon(existing_hull, fill=True, 
+                                              facecolor='gray', alpha=alpha_value, 
+                                              edgecolor='gray', linewidth=1)
                     ax.add_patch(existing_polygon)
         
         # 繪製所有點
@@ -294,18 +391,89 @@ def plot_convex_hull_step(step, ax):
         for point in right_hull:
             ax.plot(point[0], point[1], 'ro', markersize=8)
             
-        ax.set_title(f"Before Merge (Level {level}): Left Hull (Blue) and Right Hull (Red), Gray for Other Level Hulls")
+        ax.set_title(f"Before Merge (Level {level}): Preparing to Process Subproblem Results", fontsize=14)
+        
+        # 添加解釋說明
+        ax.text(5, 95, "Results from subproblems: Preparing to merge left and right hulls", 
+                fontsize=10, bbox=dict(facecolor='white', alpha=0.7))
+        ax.text(5, 90, "Gray outlines: Hulls from other recursion levels", 
+                fontsize=10, bbox=dict(facecolor='white', alpha=0.7))
         
     elif step['type'] == 'merge_after':
         # 繪製合併後的結果
         result = step['result']
+        all_points = step['all_points']
+        
+        # 確保繪製所有點，包括不在當前處理範圍的點
+        # 首先取得原始點集
+        original_points = []
+        for original_step in st.session_state.steps:
+            if original_step['type'] == 'divide' and original_step['level'] == 0:
+                original_points = original_step['all_points']
+                break
+        
+        # 取得當前正在處理的點和其他點
+        current_hull_points = set(tuple(p) for p in result)
+        
+        # 繪製非當前處理的點（灰色，較小）
+        for point in original_points:
+            if tuple(point) not in current_hull_points and point not in all_points:
+                ax.plot(point[0], point[1], 'o', color='lightgray', alpha=0.4, markersize=3)
+        
+        # 添加遞迴層級視覺化
+        max_hulls = 5  # 最多顯示的其他凸包數量
+        
+        # 保存當前步驟的索引，用於查找之前完成的凸包
+        current_step_index = -1
+        for i, s in enumerate(st.session_state.steps):
+            if s == step:
+                current_step_index = i
+                break
+        
+        # 查找之前所有已完成的凸包，按層級和完成順序排序
+        previous_hulls = []
+        if current_step_index >= 0:
+            for i in range(current_step_index):
+                prev_step = st.session_state.steps[i]
+                if prev_step['type'] == 'merge_after' and 'result' in prev_step:
+                    # 不同層級的凸包用不同顏色顯示
+                    previous_hulls.append({
+                        'hull': prev_step['result'],
+                        'level': prev_step.get('level', 0),
+                        'final': prev_step.get('final_hull_this_level', False)
+                    })
         
         # 先繪製所有已存在的凸包（半透明灰色）
         if 'all_existing_hulls' in step:
-            for existing_hull in step['all_existing_hulls']:
+            existing_hulls = step['all_existing_hulls']
+            # 限制顯示數量，避免過多
+            if len(existing_hulls) > max_hulls:
+                existing_hulls = existing_hulls[-max_hulls:]
+                
+            for i, existing_hull in enumerate(existing_hulls):
                 if len(existing_hull) > 2:
-                    existing_polygon = Polygon(existing_hull, fill=True, facecolor='gray', alpha=0.15, edgecolor='gray', linewidth=1)
+                    # 根據大小設置不同顏色和透明度，暗示不同的遞迴層級
+                    hull_size = len(existing_hull)
+                    alpha_value = 0.1 + 0.05 * (i % 3)
+                    existing_polygon = Polygon(existing_hull, fill=True, 
+                                              facecolor='gray', alpha=alpha_value, 
+                                              edgecolor='gray', linewidth=1)
                     ax.add_patch(existing_polygon)
+        
+        # 繪製之前完成的凸包，特別是較高層級的最終結果
+        for prev_hull_info in previous_hulls:
+            prev_hull = prev_hull_info['hull']
+            prev_level = prev_hull_info['level']
+            is_final = prev_hull_info['final']
+            
+            # 只顯示較高層級的最終結果
+            if prev_level < level and is_final and len(prev_hull) > 2:
+                alpha_value = 0.2
+                # 使用淺綠色標記之前層級的最終結果
+                prev_polygon = Polygon(prev_hull, fill=True, 
+                                      facecolor='lightgreen', alpha=alpha_value, 
+                                      edgecolor='lightgreen', linewidth=1.5)
+                ax.add_patch(prev_polygon)
         
         # 繪製所有點
         for point in step['all_points']:
@@ -322,7 +490,28 @@ def plot_convex_hull_step(step, ax):
         for point in result:
             ax.plot(point[0], point[1], 'go', markersize=8)
             
-        ax.set_title(f"After Merge (Level {level}): New Hull (Green), Gray for Other Level Hulls")
+        # 添加回朔標記，表示從子問題返回
+        if level > 0:  # 只有非根層級才顯示回朔標記
+            ax.text(50, 50, "↑", fontsize=30, color='purple', alpha=0.7,
+                   ha='center', va='center')
+            
+        ax.set_title(f"After Merge (Level {level}): Backtracking to Upper Level", fontsize=14)
+        
+        # 添加解釋說明
+        if level == 0:
+            ax.text(5, 95, "Recursion Base: All backtracking complete, final hull obtained", 
+                    fontsize=10, bbox=dict(facecolor='white', alpha=0.7))
+        else:
+            ax.text(5, 95, f"Backtracking: Result will return to level {level-1}", 
+                    fontsize=10, bbox=dict(facecolor='white', alpha=0.7))
+        
+        ax.text(5, 90, "Green: Current level merged result  Gray: Other level hulls", 
+                fontsize=10, bbox=dict(facecolor='white', alpha=0.7))
+        
+        # 簡單的遞迴層級指示圖
+        recursion_indicator = "→" * level + "●" + "←" * level
+        ax.text(50, 85, recursion_indicator, fontsize=12, ha='center',
+               bbox=dict(facecolor='lightyellow', alpha=0.5))
 
 def plot_graham_scan_step(step, ax):
     """繪製 Graham scan 步驟"""
@@ -344,7 +533,7 @@ def plot_graham_scan_step(step, ax):
             else:
                 ax.plot(point[0], point[1], 'ko', markersize=8)
         
-        ax.set_title("Graham Scan: 找到起始點（最下方的點）")
+        ax.set_title("Graham Scan: Finding the Starting Point (Lowest Point)")
         ax.legend()
         
     elif step['type'] == 'sort_by_angle':
@@ -366,7 +555,7 @@ def plot_graham_scan_step(step, ax):
             ax.plot([start_point[0], point[0]], [start_point[1], point[1]], 
                    'b--', alpha=0.5, linewidth=1)
         
-        ax.set_title("Graham Scan: 按極角排序點（藍色數字表示順序）")
+        ax.set_title("Graham Scan: Sorting Points by Polar Angle (Blue Numbers Show Order)")
         ax.legend()
         
     elif step['type'] == 'remove_point':
@@ -392,7 +581,7 @@ def plot_graham_scan_step(step, ax):
                                  linewidth=2, linestyle='--', alpha=0.7)
             ax.add_patch(hull_polygon)
         
-        ax.set_title(f"Graham Scan: 移除點 {removed_point} （形成右轉）")
+        ax.set_title(f"Graham Scan: Removing Point {removed_point} (Forms Right Turn)")
         ax.legend()
         
     elif step['type'] == 'add_point':
@@ -419,7 +608,7 @@ def plot_graham_scan_step(step, ax):
             ax.plot([hull[0][0], hull[1][0]], [hull[0][1], hull[1][1]], 
                    'g-', linewidth=2)
         
-        ax.set_title(f"Graham Scan: 添加點 {added_point} 到凸包")
+        ax.set_title(f"Graham Scan: Adding Point {added_point} to Hull")
         ax.legend()
 
 def main():
@@ -455,8 +644,11 @@ def main():
     if st.sidebar.button("計算凸包"):
         steps = []
         if algorithm == "分治法 (Divide & Conquer)":
+            # 儲存原始點集到session_state，確保所有步驟都能訪問
+            st.session_state.original_points = points.copy()
             result = convex_hull_divide_conquer(points.copy(), steps, 0)
         else:  # Graham's Scan
+            st.session_state.original_points = points.copy()
             result = graham_scan(points.copy(), steps)
         
         st.session_state.steps = steps
@@ -479,6 +671,11 @@ def main():
         3. **Conquer**：找到兩個凸包的上下公切線，合併成最終凸包
         
         **時間複雜度：** O(n log n)
+        
+        **遞迴與回朔的概念：**
+        - **遞迴向下**：問題不斷被分解為更小的子問題，直到基本情況（點數≤3）
+        - **回朔向上**：從基本情況開始，逐步合併子問題的解，最終得到完整解
+        - **層級結構**：每個遞迴層級處理特定大小的子問題，灰色輪廓顯示其他層級
         """)
     else:
         st.write("### Graham's Scan 演算法說明")
@@ -546,29 +743,39 @@ def main():
     # 圖例
     st.markdown("---")
     if algorithm == "分治法 (Divide & Conquer)":
-        st.write("### 顏色說明（分治法）")
+        st.write("### Color Legend (Divide & Conquer)")
         col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
-            st.markdown("🔵 **藍色**：左半部分")
+            st.markdown("🔵 **Blue**: Left half")
         with col2:
-            st.markdown("🔴 **紅色**：右半部分")
+            st.markdown("🔴 **Red**: Right half")
         with col3:
-            st.markdown("🟢 **綠色**：新合併凸包")
+            st.markdown("🟢 **Green**: Newly merged hull")
         with col4:
-            st.markdown("⚫ **黑色**：所有點")
+            st.markdown("⚫ **Black**: All points")
         with col5:
-            st.markdown("⚪ **灰色**：其他層級凸包")
+            st.markdown("⚪ **Gray**: Other level hulls")
+            
+        # 添加遞迴與回朔說明
+        st.write("### Recursion & Backtracking Indicators")
+        st.markdown("""
+        - **Yellow box**: Shows current recursion level (level 0 is top level)
+        - **Purple arrow**: Indicates backtracking, returning from subproblems to parent
+        - **Text descriptions**: Each step provides explanations of recursion and backtracking
+        - **Level indicator**: Bottom "→●←" shows position in recursion tree
+        """)
     else:
-        st.write("### 顏色說明（Graham's Scan）")
+        st.write("### Color Legend (Graham's Scan)")
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.markdown("🔴 **紅色**：起始點")
+            st.markdown("🔴 **Red**: Starting point")
         with col2:
-            st.markdown("🔵 **藍色**：當前處理點")
+            st.markdown("🔵 **Blue**: Current processing point")
         with col3:
-            st.markdown("🟢 **綠色**：凸包中的點")
+            st.markdown("🟢 **Green**: Points in hull")
         with col4:
-            st.markdown("❌ **紅叉**：被移除的點")
+            st.markdown("❌ **Red X**: Removed points")
+
 
 if __name__ == "__main__":
     main()
